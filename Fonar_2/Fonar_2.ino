@@ -23,8 +23,8 @@ void setup() {
                   // ---------------------------смена частоты--------------------  
   Serial.begin(9600);
   
-  pinMode(button1B, INPUT_PULLUP);
-  pinMode (button2B, INPUT_PULLUP);
+  pinMode(button1, INPUT_PULLUP);
+  pinMode (button2, INPUT_PULLUP);
     pinMode(9,OUTPUT);  // Диод 1 белый
     pinMode(10,OUTPUT); // Диод 2 белый
     pinMode(3,OUTPUT); // красны диод
