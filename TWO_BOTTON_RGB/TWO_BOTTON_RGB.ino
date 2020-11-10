@@ -24,6 +24,7 @@ byte led_level;                           // значение диода 3 на 
   // -------------------- LOGIC 1 ----------------------------------------
 boolean but1, but2, but3;                        // нажатие кнопки 1, одинарное / зажатие 
 boolean flag1, flag2, flag4, flag5, flag1_1, flag4_1, flag6, flag7;
+boolean flag8;                              // переменная разрешения включения lock mode
 boolean flag3;                              // переменная на переобнуление таймера на выкл        
 byte val;                                   // выбор режимов
 unsigned long last_press;                   // таймер нажатия кнопки
@@ -36,7 +37,7 @@ boolean but10, but11, but12, but13, but_adap;         // опрос кнопки
 boolean flag10; 
 boolean flag11, flag12, flag13;                                      // переменная диммера, удержание после нажатия / переменная обнуления таймера 100% / переменная включения 100%
 boolean  flag14, flag15, flag16;
-boolean adap_flag, flag_time_adap,  max_time_flag;
+boolean adap_flag, flag_time_adap,  max_time_flag, flag_off_adapt;
 boolean adaptive;   
 byte val1_1;                                           // переменная кейса кнопки 2
 byte save_dimm1, save_dimm2;                           // сохраняем состояния димеров для режима "100%" и "100% 3мин"
@@ -132,9 +133,13 @@ void loop() {       //-------------------------------------------------------- L
      Serial.println("Double2");
      but12 = 1;
      //press12 = 1;
-     if(lock2 == 1 && flag13 == 0){                 // проверяем небыл ли включен режим на флаг 13 
+     if(but12 == 1 && flag13 == 0 && flag8 == 0){                 // проверяем небыл ли включен режим на флаг 13 
      lock2 = 1;                // переменная LOCK MODE
+     Serial.println(lock2);
+     
      }
+     Serial.println(flag8);
+     Serial.println(flag13);
   }
   // ----------------- проверка на тройной клик 2 -----------------------
   if (butt2.isTriple()){
@@ -151,7 +156,13 @@ void loop() {       //-------------------------------------------------------- L
      flag12 = 1; 
      //Serial.println(millis() - time_but12);
   }
-  if((but12 == 1) && millis() - time_but12 > 1000){
+  if(but12 == 1 && millis() - time_but12 > 1010){     //  test
+    but12 = 0; flag12 = 0; //flag13 = 0;                // test
+    Serial.println("OFF but12");
+ }
+  if((but12 == 1 && flag13 == 1) && millis() - time_but12 > 1000){    // flag 13 test
+     if(val1_1 == 13){val1_1 = 11;}                         // возврашаем состояния вал1 в 11.
+     if(val == 7){val = 1;}                                 // возврашаем состояния вал в 1.
     but12 = 0; but11 = 0; flag12 = 0; flag13 = 0;
     analogWrite(led1,0);analogWrite(led2,0);
     Serial.println("OFF bust 100%");
@@ -167,6 +178,8 @@ void loop() {       //-------------------------------------------------------- L
        }
   }
   if(but12 == 1 && but11 == 1){
+     if(but12 == 1 && val1_1 == 11){val1_1 = 13;}          // смена вал1 если 11 на 13
+     if(but12 == 1 && val == 1){val = 7;}                  // смена вал если 1 на 7
     but11 = 0; 
     flag12 = 0; flag13 = 1;  
     analogWrite(led1,255);analogWrite(led2,255);
@@ -185,14 +198,15 @@ void loop() {       //-------------------------------------------------------- L
     Serial.println("led2 15%");
   }
   if(but11 == 1 && flag11 == 1 && flag13 == 0){                                 // диммер 2 / LED2    
-    but11 = 0;  
+     
     val1_1 = 12;                                                               
     Serial.println("dimm 2");
     Serial.println("val1_1");
     Serial.println(val1_1);
   }
+  but11 = 0; 
         //  ------------------------------------------------------ adaptive mode ------------------------------------------------ 
-  if(but_adap == 1 && flag11 == 0 && adap_flag == 0 && flag_time_adap == 0 && flag13 == 0){            
+  if(but_adap == 1 && flag11 == 0 && adap_flag == 0 && flag_time_adap == 0 && flag13 == 0 && flag_off_adapt == 0){            
     flag_time_adap = 1;
     time_adap = millis();                                                               // обнуление таймера на вкл 
     Serial.println("flag_time_adap");
@@ -203,13 +217,13 @@ void loop() {       //-------------------------------------------------------- L
     dimm_flag2 = 0;
     Serial.println("flag_time_adap 0");
   }
-  if((but_adap == 1 && adap_flag == 0 && flag11 == 0 && flag13 == 0) && millis() - time_adap > 1000){   // таймер вкл режима                        
+  if((but_adap == 1 && adap_flag == 0 && flag11 == 0 && flag13 == 0 && flag_off_adapt == 0) && millis() - time_adap > 1000){   // таймер вкл режима                        
     adap_flag = 1; 
     adaptive = !adaptive;                                                                // переменная вкл/выкл адаптивного режима
     Serial.println("adaptive");
     Serial.println(adaptive);
     flag_time_adap = 0;
-    but11 = 0;
+    but11 = 0;                                 // отпускание кнопки удержания
     dimm_flag2 = 0;
   }
      if(but_adap == 0 && adap_flag == 1 && flag11 == 0){                                 // отпускаем переменную нажатия кнопки при отпусканиии кнопки
@@ -222,7 +236,7 @@ void loop() {       //-------------------------------------------------------- L
   }
   if(adaptive == 0 && adap_flag == 1 && flag16 == 0){                                   // отработка красного светодиода адаптивный режим выкл
     ledlock_flag2 = 1; flag16 = 1;
-   // Serial.println(adap_flag);
+    //Serial.println(adap_flag);
   }
   if(but_adap == 0){                                                                    // отпускание флагов на однократную отработку красного светодиода
     flag15 = 0; flag16 = 0;
@@ -237,8 +251,9 @@ void loop() {       //-------------------------------------------------------- L
     max_time = millis();
   }
   if(but13 == 1 && flag14 == 1){                               //выключаем вторым нажатием  
-    but13 = 0; flag14 = 0;
+    but13 = 0; flag14 = 0; flag13 = 0; flag8 = 0;
     max_time_flag = 0;
+    flag_off_adapt = 0;
     analogWrite(led1,0); analogWrite(led2,0);
     Serial.println("100% off1");
     if(dimm_case1 == 1){                                       // функция перезаписи значения диммера 1
@@ -254,13 +269,15 @@ void loop() {       //-------------------------------------------------------- L
   }
   if(max_time_flag == 1 ){                                     // режим вкл диоды
     analogWrite(led1,255);analogWrite(led2,255);
+    flag_off_adapt = 1; flag13 = 1; flag8 = 1;
     Serial.println("100% on");
-    Serial.println(brightness2);
+   // Serial.println(brightness2);
        }
 
   if(max_time_flag == 1 && millis() - max_time > 5000){        // время автовыключения режима
      analogWrite(led1,0); analogWrite(led2,0);
-      max_time_flag = 0; flag14 = 0;
+      max_time_flag = 0; flag14 = 0; flag13 = 0; flag8 = 0;
+      flag_off_adapt = 0;
       Serial.println(val1_1);
      Serial.println(val);
       Serial.println("100% off");
@@ -378,39 +395,40 @@ void loop() {       //-------------------------------------------------------- L
   val = Serial.parseInt();
   }
  switch(val){
- case 1: analogWrite(led1,10);              
+ case 1: analogWrite(led1,10); flag8 = 1;             
   break;
-  case 2: analogWrite(ledred,125); analogWrite(ledgreen,0);
+  case 2: analogWrite(ledred,125); analogWrite(ledgreen,0); flag8 = 1;
   break;
-  case 3: dimm_case1 = 1;
+  case 3: dimm_case1 = 1; flag8 = 1;
   break;
-  case 4: majak_flag = 1;
+  case 4: majak_flag = 1; flag8 = 1;
   break;
-  case 5: analogWrite(ledblue,125); analogWrite(ledred,0);
+  case 5: analogWrite(ledblue,125); analogWrite(ledred,0); flag8 = 1;
   break;
-  case 6: analogWrite(ledgreen,255); analogWrite(ledblue,0);
+  case 6: analogWrite(ledgreen,255); analogWrite(ledblue,0); flag8 = 1;
   break;
-  case 7: 
+  case 7: // режим 100% использует case 7
   break;
   case 8: 
   break;
   case 9: 
   break;
   case 10:analogWrite(ledred,0);analogWrite(led1,0);analogWrite(ledblue,0);analogWrite(ledgreen,0); //analogWrite(led2,0);               // выключение
-  majak_flag = 0; dimm_case1 = 0;                                                                                                      // выкл маяк / димер
+  majak_flag = 0; dimm_case1 = 0; flag8 = 0;                                                                                                     // выкл маяк / димер / lock mode allow access
   but1 = 0; but2 = 0; flag1 = 0; flag2 = 0; flag3 = 0; flag4 = 0; flag5 = 0; flag1_1 = 0; flag4_1 = 0; flag6 = 0; flag7 = 0;
   brightness1 = 15;                                                                                                                    // возвращаем диммер в 15%
+  val = 0;     // test
   break;
         }
  if(Serial.available()){
   val1_1 = Serial.parseInt();
   }
   switch(val1_1){
-  case 11: analogWrite(led2,10);
+  case 11: analogWrite(led2,10); flag8 = 1;
   break;
-  case 12: dimm_case2 = 1;
+  case 12: dimm_case2 = 1; flag8 = 1;
   break;
-  case 13: val1_1 = 11;
+  case 13:  // режим 100% использует case 13
   break;
   case 14: val1_1 = 12;
   break;
@@ -426,7 +444,7 @@ void loop() {       //-------------------------------------------------------- L
   break;
   case 20: analogWrite(led2,0);
   but10 = 0; but11 = 0; but12 = 0; but13 = 0;
-  flag10 = 0; flag11 = 0;                                                  // adap_flag = 0; flag15 = 0; flag16 = 0; flag12 = 0;
+  flag10 = 0; flag11 = 0; flag8 = 0;                                                 // adap_flag = 0; flag15 = 0; flag16 = 0; flag12 = 0;
   dimm_case2 = 0;
   brightness2 = 15; 
   val1_1 = 0;
