@@ -37,6 +37,7 @@ boolean but10, but11, but12, but13, but_adap;         // опрос кнопки
 boolean flag10; 
 boolean flag11, flag12, flag13;                                      // переменная диммера, удержание после нажатия / переменная обнуления таймера 100% / переменная включения 100%
 boolean  flag14, flag15, flag16;
+boolean flag_100_xtime;                                      // флаг включения режима 100% х минут.
 boolean adap_flag, flag_time_adap,  max_time_flag, flag_off_adapt;
 boolean adaptive;   
 byte val1_1;                                           // переменная кейса кнопки 2
@@ -87,24 +88,29 @@ void loop() {       //-------------------------------------------------------- L
   // ------------------- ОПРОС КНОПКИ 1 ---------------------------------
   // ---------------- одинарное нажатие -----------------------------
   if (butt1.isSingle()){
-    Serial.println("Single1");
-    Serial.println(millis() - last_press);
-   press1 = 1; but1 = 1; 
-   press_off = 1; 
+    //Serial.println(millis() - last_press);
+    if(flag_100_xtime == 0){        // проверка выключен ли режим 100% 3 мин
+      Serial.println("Single1");
+      press1 = 1; but1 = 1; 
+      press_off = 1; 
   }
-  
+  }
   // ---------------- проверка на удержание ------------------------
   if (butt1.isHold()){
-   // Serial.println("Holding1");
-    press2 = 1; but2 = 1;
-    dimm_flag1 = 1;                // переменная вкл/выкл димера 
+    if(flag_100_xtime == 0){         // проверка выключен ли режим 100% 3 мин
+      Serial.println("Holding1");
+      press2 = 1; but2 = 1;
+      dimm_flag1 = 1;                // переменная вкл/выкл димера 
+  }
   }
   // ------------------ проверка на двойной клик -------------------------
   if (butt1.isDouble()){
-    Serial.println("Double1");
+    if(flag_100_xtime == 0){         // проверка выключен ли режим 100% 3 мин
+     Serial.println("Double1");
      lock1 = 1;                // переменная LOCK MODE
      but3 = 1;
      press3 = 1;
+  }
   } 
   // ------------------- ОПРОС КНОПКИ 1 ---------------------------------
   
@@ -113,39 +119,39 @@ void loop() {       //-------------------------------------------------------- L
   // ------------------- ОПРОС КНОПКИ 2 ---------------------------------
   // ---------------- одинарное нажатие 2   -----------------------------
   if (butt2.isSingle()){
-     Serial.println("Single2");
      //Serial.println(millis() - last_press);
-     but10 = 1;
-     press10 = 1;
-     press_off2 = 1;
+     if(flag_100_xtime == 0){         // проверка выключен ли режим 100% 3 мин
+      Serial.println("Single2");
+      but10 = 1;
+      press10 = 1;
+      press_off2 = 1;
+  }
   }
   // ---------------- проверка на удержание 2 ---------------------------
   if (butt2.isHold()){
-    Serial.println("Holding2");
-     but11 = 1;
-     dimm_flag2 = 1;                // переменная вкл/выкл димера
-   // press11 = 1;
-     but_adap = 1;
+    if(flag_100_xtime == 0){        // проверка выключен ли режим 100% 3 мин
+      Serial.println("Holding2");
+      but11 = 1;
+      dimm_flag2 = 1;                // переменная вкл/выкл димера
+      but_adap = 1;
+  }
   }
 //Serial.println(but_adap);
   // ------------------ проверка на двойной клик 2 ----------------------
   if (butt2.isDouble()){
-     Serial.println("Double2");
-     but12 = 1;
-     //press12 = 1;
-     if(but12 == 1 && flag13 == 0 && flag8 == 0){                 // проверяем небыл ли включен режим на флаг 13 
-     lock2 = 1;                // переменная LOCK MODE
-     Serial.println(lock2);
-     
+    if(flag_100_xtime == 0){         // проверка выключен ли режим 100% 3 мин
+      Serial.println("Double2");
+      but12 = 1;
+       if(but12 == 1 && flag13 == 0 && flag8 == 0){                 // проверяем небыл ли включен режим на флаг 13 
+          lock2 = 1;                // переменная LOCK MODE
+          Serial.println(lock2);
+       }
      }
-     Serial.println(flag8);
-     Serial.println(flag13);
   }
   // ----------------- проверка на тройной клик 2 -----------------------
   if (butt2.isTriple()){
     Serial.println("Triple");
-    but13 = 1;  
-   // press13 = 1;    
+    but13 = 1;      
   }
   
   // ------------------- ОПРОС КНОПКИ 2 ---------------------------------
@@ -197,7 +203,7 @@ void loop() {       //-------------------------------------------------------- L
     val1_1 = 11;
     Serial.println("led2 15%");
   }
-  if(but11 == 1 && flag11 == 1 && flag13 == 0){                                 // диммер 2 / LED2    
+  if(but11 == 1 && flag11 == 1 && flag13 == 0){                                 // диммер 2 / LED2    //max_time_flag =/test
      
     val1_1 = 12;                                                               
     Serial.println("dimm 2");
@@ -254,6 +260,7 @@ void loop() {       //-------------------------------------------------------- L
     but13 = 0; flag14 = 0; flag13 = 0; flag8 = 0;
     max_time_flag = 0;
     flag_off_adapt = 0;
+    flag_100_xtime = 0;
     analogWrite(led1,0); analogWrite(led2,0);
     Serial.println("100% off1");
     if(dimm_case1 == 1){                                       // функция перезаписи значения диммера 1
@@ -270,6 +277,7 @@ void loop() {       //-------------------------------------------------------- L
   if(max_time_flag == 1 ){                                     // режим вкл диоды
     analogWrite(led1,255);analogWrite(led2,255);
     flag_off_adapt = 1; flag13 = 1; flag8 = 1;
+    flag_100_xtime = 1;
     Serial.println("100% on");
    // Serial.println(brightness2);
        }
@@ -278,6 +286,7 @@ void loop() {       //-------------------------------------------------------- L
      analogWrite(led1,0); analogWrite(led2,0);
       max_time_flag = 0; flag14 = 0; flag13 = 0; flag8 = 0;
       flag_off_adapt = 0;
+      flag_100_xtime = 0;
       Serial.println(val1_1);
      Serial.println(val);
       Serial.println("100% off");
